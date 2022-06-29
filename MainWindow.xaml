@@ -1,0 +1,202 @@
+﻿<Window x:Class="Bank_App_SQL_WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Bank_App_SQL_WPF"
+        mc:Ignorable="d"
+        Title="Банк" Background="AntiqueWhite" Height="800" Width="1600">
+    <Window.Resources>
+        <Style TargetType="{x:Type GridViewColumnHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <ContextMenu x:Key="CmButton">
+            <MenuItem Header="Перевод" Click="MenuItemTransfer_OnClick" />
+            <MenuItem Header="Пополнение счёта" Click="MenuItemAddFunds_OnClick" />
+            <MenuItem Header="Добавить клиента" Click="MenuItem_Add_Client_Click" />
+            <MenuItem Header="Удалить клиента" Click="MenuItem_Delete_Client_Click" />
+            <MenuItem Header="Открыть счёт" Click="MenuItem_Add_Deposit_Click" />
+            <MenuItem Header="Закрыть счёт" Click="MenuItem_Close_Deposit_Click" />
+        </ContextMenu>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="127*"/>
+            <ColumnDefinition Width="183*"/>
+            <ColumnDefinition Width="172*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10*"/>
+            <RowDefinition Height="10*"/>
+            <RowDefinition Height="375*"/>
+            <RowDefinition Height="25"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Grid.ColumnSpan="4">
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_Файл" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
+                    <MenuItem Header="_Загрузить данные" IsEnabled="True"></MenuItem>
+                    <MenuItem Header="_Сохранить данные" IsEnabled="True"></MenuItem>
+                    <Separator/>
+                    <MenuItem Header="_Выход" IsEnabled="True" Click="MenuItem_Click_Exit"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="_Вид" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <MenuItem Header="_Обновить список клиентов" IsEnabled="True" Click="MenuItem_Refresh"></MenuItem>
+                    <MenuItem Header="_Изменить вид" IsEnabled="True"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="_Подробнее" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <MenuItem Header="_Опрограмме" Click="MenuItem_Click_About"></MenuItem>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+
+        <StackPanel Margin="0,26,0,986" Grid.RowSpan="3">
+            <TextBlock FontWeight="DemiBold" Background="LightGray" Height="27"/>
+        </StackPanel>
+
+        <ListView Grid.Column="0" Grid.RowSpan="3" x:Name="clientList"
+                  SelectionChanged="ClientInfo_OnSelectionChanged" Margin="0,26,0,0"
+                  PreviewMouseRightButtonUp="ClientList_OnPreviewMouseRightButtonUp">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="30" DisplayMemberBinding="{Binding Id}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="SurName">Id</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding SurName}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="SurName">Фамилия</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Name}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Name">Имя</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Patronymic}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Patronymic">Отчество</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <ListView Grid.Column="1" Grid.RowSpan="3" x:Name="depositList" Margin="0,26,0,0"
+                  PreviewMouseRightButtonUp="DepositList_OnPreviewMouseRightButtonUp">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="30" DisplayMemberBinding="{Binding ClientId}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Id">Id</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="180" DisplayMemberBinding="{Binding DepositNumber}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="SurName">№ Счёта</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="180" DisplayMemberBinding="{Binding AmountFunds}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Name">Средства на счету</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="180" DisplayMemberBinding="{Binding DepositType}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Patronymic">Тип счёта</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <TextBlock Grid.Column="2" FontWeight="DemiBold" Background="LightGray" Text="   Информация о действиях со счетами" 
+                   Margin="1,1,1,1" Grid.Row="1"/>
+
+        <ListBox Grid.Row="2" Grid.Column="2" x:Name="infoList"/>
+
+        <Popup x:Name="pTransfer" StaysOpen="False" Placement="Mouse"
+               PopupAnimation="Scroll" AllowsTransparency="True">
+            <GroupBox Header="Перевод" Width="200" Margin="10" Padding="10">
+                <StackPanel Width="150">
+                    <TextBlock>Перевести на счёт №:</TextBlock>
+                    <TextBox x:Name="transferToTextBox" />
+                    <TextBlock>Введите сумму:</TextBlock>
+                    <TextBox x:Name="amountTransferTextBox" />
+                    <Button Margin="0,10" Click="Button_Transfer_Clients_Click">Перевод</Button>
+                </StackPanel>
+            </GroupBox>
+        </Popup>
+
+        <Popup x:Name="pAddFunds" StaysOpen="False" Placement="Mouse"
+               PopupAnimation="Scroll" AllowsTransparency="True">
+            <GroupBox Header="Пополнение счёта" Width="200" Margin="10" Padding="10">
+                <StackPanel Width="150">
+                    <TextBlock>Введите сумму:</TextBlock>
+                    <TextBox x:Name="amountFundsTextBox"/>
+                    <Button Margin="0,10" Click="Button_AddFunds_Clients_Click">Пополнить</Button>
+                </StackPanel>
+            </GroupBox>
+        </Popup>
+
+        <Popup x:Name="pAddClient" StaysOpen="False" Placement="Mouse"
+               PopupAnimation="Scroll" AllowsTransparency="True">
+            <GroupBox Header="Добавление клиента" Width="200" Margin="10" Padding="10">
+                <StackPanel Width="150">
+                    <TextBlock>Id:</TextBlock>
+                    <TextBox x:Name="Id_txt"/>
+                    <TextBlock>Имя:</TextBlock>
+                    <TextBox x:Name="Name_txt"/>
+                    <TextBlock>Фамилия:</TextBlock>
+                    <TextBox x:Name="SurName_txt"/>
+                    <TextBlock>Отчество:</TextBlock>
+                    <TextBox x:Name="Patronymic_txt"/>
+                    <Button Margin="0,10" Click="Button_Ok_AddClient">Добавить</Button>
+                </StackPanel>
+            </GroupBox>
+        </Popup>
+
+        <Popup x:Name="pDeleteClient" StaysOpen="False" Placement="Mouse"
+               PopupAnimation="Scroll" AllowsTransparency="True">
+            <GroupBox Header="Удаление клиента" Width="200" Margin="10" Padding="10">
+                <StackPanel Width="150">
+                    <TextBlock>Id:</TextBlock>
+                    <TextBox x:Name="Id_Delete_txt"/>
+                    <Button Margin="0,10" Click="Button_Ok_DeleteClient">Удалить</Button>
+                </StackPanel>
+            </GroupBox>
+        </Popup>
+
+        <Popup x:Name="pAddDeposit" StaysOpen="False" Placement="Mouse"
+               PopupAnimation="Scroll" AllowsTransparency="True">
+            <GroupBox Header="Добавление счёта" Width="200" Margin="10" Padding="10">
+                <StackPanel Width="150">
+                    <TextBlock>Id:</TextBlock>
+                    <TextBox x:Name="ClientId_txt"/>
+                    <TextBlock>Номер счёта:</TextBlock>
+                    <TextBox x:Name="DepositNumber_txt"/>
+                    <TextBlock>Средства:</TextBlock>
+                    <TextBox x:Name="AmountFunds_txt"/>
+                    <TextBlock>Тип счёта:</TextBlock>
+                    <TextBox x:Name="DepositType_txt"/>
+                    <Button Margin="0,10" Click="Button_Ok_AddDeposit">Добавить</Button>
+                </StackPanel>
+            </GroupBox>
+        </Popup>
+
+        <Popup x:Name="pCloseDeposit" StaysOpen="False" Placement="Mouse"
+               PopupAnimation="Scroll" AllowsTransparency="True">
+            <GroupBox Header="Закрытие счёта" Width="200" Margin="10" Padding="10">
+                <StackPanel Width="150">
+                    <TextBlock>Номер счёта:</TextBlock>
+                    <TextBox x:Name="DepositNumber_Close_txt"/>
+                    <Button Margin="0,10" Click="Button_Ok_CloseDeposit">Закрыть</Button>
+                </StackPanel>
+            </GroupBox>
+        </Popup>
+
+    </Grid>
+</Window>
