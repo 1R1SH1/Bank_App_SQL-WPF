@@ -89,11 +89,6 @@
                   PreviewMouseRightButtonUp="DepositList_OnPreviewMouseRightButtonUp">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Width="30" DisplayMemberBinding="{Binding ClientId}">
-                        <GridViewColumn.Header>
-                            <GridViewColumnHeader Tag="Id">Id</GridViewColumnHeader>
-                        </GridViewColumn.Header>
-                    </GridViewColumn>
                     <GridViewColumn Width="180" DisplayMemberBinding="{Binding DepositNumber}">
                         <GridViewColumn.Header>
                             <GridViewColumnHeader Tag="SurName">№ Счёта</GridViewColumnHeader>
@@ -146,8 +141,6 @@
                PopupAnimation="Scroll" AllowsTransparency="True">
             <GroupBox Header="Добавление клиента" Width="200" Margin="10" Padding="10">
                 <StackPanel Width="150">
-                    <TextBlock>Id:</TextBlock>
-                    <TextBox x:Name="Id_txt"/>
                     <TextBlock>Имя:</TextBlock>
                     <TextBox x:Name="Name_txt"/>
                     <TextBlock>Фамилия:</TextBlock>

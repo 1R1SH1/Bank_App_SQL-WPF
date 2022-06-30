@@ -17,19 +17,20 @@ namespace Bank_App_SQL_WPF
         private SavingMethod _savingInfoLogs = new();
 
         public event Action<string> Transaction;
-
+        
         public MainWindow()
         {
             InitializeComponent();
             Transaction += LogRepository_Transaction;
             LoadClientData();
+            clientList.Items.Refresh();
             infoList.ItemsSource = _log.log;
         }
 
         private SqlConnection con = new SqlConnection(
             @"Data Source = (localdb)\MSSQLLocalDB; 
               Initial Catalog = BankA; 
-              Integrated Security = True;");
+              Integrated Security = true;");
 
 
         private void LoadClientData()
@@ -40,6 +41,7 @@ namespace Bank_App_SQL_WPF
             SqlDataReader sdr = cmd.ExecuteReader();
             dt.Load(sdr);
             con.Close();
+            clientList.Items.Refresh();
             clientList.ItemsSource = dt.DefaultView;
         }
 
@@ -75,8 +77,10 @@ namespace Bank_App_SQL_WPF
             try
             {
                 cmd.ExecuteNonQuery();
-                Transaction?.Invoke($"Счёт №{deposit} пополнен на $'{amountFundsTextBox.Text}' ");
+
                 con.Close();
+                Transaction?.Invoke($"Счёт №{deposit} пополнен на $'{amountFundsTextBox.Text}' ");
+                CleareTextBox();
             }
             catch (SqlException ex)
             {
@@ -105,6 +109,8 @@ namespace Bank_App_SQL_WPF
                 cmdR.ExecuteNonQuery();
                 con.Close();
                 Transaction?.Invoke($"Перевод со счёта №{senders} на счёт №{transferToTextBox.Text} на сумму $'{amountTransferTextBox.Text}' ");
+                CleareTextBox();
+
             }
             catch (SqlException ex)
             {
@@ -157,8 +163,6 @@ namespace Bank_App_SQL_WPF
 
         private void MenuItem_Refresh(object sender, RoutedEventArgs e)
         {
-            LoadClientData();
-            clientList.Items.Refresh();
         }
 
         private void DepositList_OnPreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -178,7 +182,7 @@ namespace Bank_App_SQL_WPF
             {
                 SqlCommand cmd = new("INSERT INTO Client VALUES(@Name, @SurName, @Patronymic) SET @Id = @@IDENTITY;", con);
                 cmd.CommandType = CommandType.Text;
-                cmd.Parameters.AddWithValue("@Id", Id_txt.Text);
+                cmd.Parameters.Add("@Id", SqlDbType.Int, 4, "Id").Direction = ParameterDirection.Output;
                 cmd.Parameters.AddWithValue("@Name", Name_txt.Text);
                 cmd.Parameters.AddWithValue("@SurName", SurName_txt.Text);
                 cmd.Parameters.AddWithValue("@Patronymic", Patronymic_txt.Text);
@@ -187,6 +191,8 @@ namespace Bank_App_SQL_WPF
                 cmd.ExecuteNonQuery();
                 con.Close();
                 Transaction?.Invoke($"Добавлен новый клиент {Name_txt.Text} {SurName_txt.Text} {Patronymic_txt.Text}");
+                CleareTextBox();
+
             }
             catch (SqlException ex)
             {
@@ -234,6 +240,8 @@ namespace Bank_App_SQL_WPF
                 cmd.ExecuteNonQuery();
                 con.Close();
                 Transaction?.Invoke($"Добавлен новый счёт: №{DepositNumber_txt.Text} {DepositType_txt.Text}");
+                CleareTextBox();
+
             }
             catch (SqlException ex)
             {
@@ -262,8 +270,10 @@ namespace Bank_App_SQL_WPF
             try
             {
                 cmd.ExecuteNonQuery();
-                Transaction?.Invoke($"Клиент {Id_Delete_txt.Text} удалён");
                 con.Close();
+                Transaction?.Invoke($"Клиент {Id_Delete_txt.Text} удалён");
+                CleareTextBox();
+
             }
             catch (SqlException ex)
             {
@@ -282,8 +292,9 @@ namespace Bank_App_SQL_WPF
             try
             {
                 cmd.ExecuteNonQuery();
-                Transaction?.Invoke($"Счёт {DepositNumber_Close_txt.Text} закрыт");
                 con.Close();
+                Transaction?.Invoke($"Счёт {DepositNumber_Close_txt.Text} закрыт");
+                CleareTextBox();
             }
             catch (SqlException ex)
             {
@@ -292,6 +303,28 @@ namespace Bank_App_SQL_WPF
             finally
             {
                 con.Close();
+            }
+        }
+
+        private void CleareTextBox()
+        {
+            try
+            {
+                Name_txt.Clear();
+                SurName_txt.Clear();
+                Patronymic_txt.Clear();
+                ClientId_txt.Clear();
+                DepositNumber_txt.Clear();
+                AmountFunds_txt.Clear();
+                DepositType_txt.Clear();
+                Id_Delete_txt.Clear();
+                DepositNumber_Close_txt.Clear();
+                amountFundsTextBox.Clear();
+                amountTransferTextBox.Clear();
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
     }
