@@ -52,12 +52,8 @@
             </Menu>
         </DockPanel>
 
-        <StackPanel Margin="0,26,0,986" Grid.RowSpan="3">
-            <TextBlock FontWeight="DemiBold" Background="LightGray" Height="27"/>
-        </StackPanel>
-
         <ListView Grid.Column="0" Grid.RowSpan="3" x:Name="clientList"
-                  SelectionChanged="ClientInfo_OnSelectionChanged" Margin="0,26,0,0"
+                  SelectionChanged="ClientInfo_OnSelectionChanged" Margin="0,19,0,0"
                   PreviewMouseRightButtonUp="ClientList_OnPreviewMouseRightButtonUp">
             <ListView.View>
                 <GridView>
@@ -85,7 +81,7 @@
             </ListView.View>
         </ListView>
 
-        <ListView Grid.Column="1" Grid.RowSpan="3" x:Name="depositList" Margin="0,26,0,0"
+        <ListView Grid.Column="1" Grid.RowSpan="3" x:Name="depositList" Margin="0,19,0,0"
                   PreviewMouseRightButtonUp="DepositList_OnPreviewMouseRightButtonUp">
             <ListView.View>
                 <GridView>
@@ -109,7 +105,7 @@
         </ListView>
 
         <TextBlock Grid.Column="2" FontWeight="DemiBold" Background="LightGray" Text="   Информация о действиях со счетами" 
-                   Margin="1,1,1,1" Grid.Row="1"/>
+                   Margin="0,0,0,0" Grid.Row="1"/>
 
         <ListBox Grid.Row="2" Grid.Column="2" x:Name="infoList"/>
 

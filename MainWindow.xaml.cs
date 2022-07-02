@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,49 +16,28 @@ namespace Bank_App_SQL_WPF
     {
         private InfoLog _log = new();
         private SavingMethod _savingInfoLogs = new();
+        SqlConnection con;
+        DataTable dt;
+        SqlDataAdapter da;
 
         public event Action<string> Transaction;
-        
+
+        SqlConnectionStringBuilder connection = new()
+        {
+            DataSource = @"(localdb)\MSSQLLocalDB",
+            InitialCatalog = "BankA",
+            IntegratedSecurity = true
+            //UserID = "Admin",
+            //Password = "Password"
+        };
+
         public MainWindow()
         {
             InitializeComponent();
             Transaction += LogRepository_Transaction;
             LoadClientData();
-            clientList.Items.Refresh();
             infoList.ItemsSource = _log.log;
-        }
-
-        private SqlConnection con = new SqlConnection(
-            @"Data Source = (localdb)\MSSQLLocalDB; 
-              Initial Catalog = BankA; 
-              Integrated Security = true;");
-
-
-        private void LoadClientData()
-        {
-            SqlCommand cmd = new("Select * From Client", con);
-            DataTable dt = new();
-            con.Open();
-            SqlDataReader sdr = cmd.ExecuteReader();
-            dt.Load(sdr);
-            con.Close();
             clientList.Items.Refresh();
-            clientList.ItemsSource = dt.DefaultView;
-        }
-
-        private void LoadDepositData()
-        {
-            con.Open();
-            string client = ((DataRowView)clientList.SelectedItem).Row["Id"].ToString();
-            SqlCommand cmd = new("SELECT d.ClientId, d.DepositNumber, d.AmountFunds, d.DepositType " +
-                                 "FROM Deposit AS d " +
-                                 "JOIN Client AS c ON d.ClientId = c.Id " +
-                                 $"WHERE c.Id = '{client}';", con);
-            DataTable dt = new();
-            SqlDataReader sdr = cmd.ExecuteReader();
-            dt.Load(sdr);
-            con.Close();
-            depositList.ItemsSource = dt.DefaultView;
         }
 
         private void LogRepository_Transaction(string message)
@@ -67,8 +47,21 @@ namespace Bank_App_SQL_WPF
             _savingInfoLogs.SaveInfoLog(_log.log);
         }
 
+        public void LoadClientData()
+        {
+            con = new(connection.ConnectionString);
+            SqlCommand cmd = new("Select * From Client", con);
+            dt = new();
+            con.Open();
+            SqlDataReader sdr = cmd.ExecuteReader();
+            dt.Load(sdr);
+            con.Close();
+            clientList.ItemsSource = dt.DefaultView;
+        }
+
         private void Button_AddFunds_Clients_Click(object sender, RoutedEventArgs e)
         {
+            con = new(connection.ConnectionString);
             string deposit = ((DataRowView)depositList.SelectedItem).Row["DepositNumber"].ToString();
             con.Open();
             SqlCommand cmd = new("Update Deposit " +
@@ -94,6 +87,7 @@ namespace Bank_App_SQL_WPF
 
         private void Button_Transfer_Clients_Click(object sender, RoutedEventArgs e)
         {
+            con = new(connection.ConnectionString);
             string senders = ((DataRowView)depositList.SelectedItem).Row["DepositNumber"].ToString();
             con.Open();
             SqlCommand cmdS = new("Update Deposit " +
@@ -128,7 +122,21 @@ namespace Bank_App_SQL_WPF
             {
                 try
                 {
-                    LoadDepositData();
+                    con = new(connection.ConnectionString);
+                    dt = new();
+                    da = new();
+
+                    string client = ((DataRowView)clientList.SelectedItem).Row["Id"].ToString();
+
+                    var sql = @"SELECT d.ClientId, d.DepositNumber, d.AmountFunds, d.DepositType " +
+                                         "FROM Deposit AS d " +
+                                         "JOIN Client AS c ON d.ClientId = c.Id " +
+                                         $"WHERE c.Id = '{client}';";
+                    da.SelectCommand = new SqlCommand(sql, con);
+
+                    da.Fill(dt);
+                    
+                    depositList.ItemsSource = dt.DefaultView;
                 }
                 catch (SqlException ex)
                 {
@@ -163,6 +171,10 @@ namespace Bank_App_SQL_WPF
 
         private void MenuItem_Refresh(object sender, RoutedEventArgs e)
         {
+            dt = new();
+            da = new();
+            da.Update(dt);
+            clientList.Items.Refresh();
         }
 
         private void DepositList_OnPreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -180,6 +192,9 @@ namespace Bank_App_SQL_WPF
         {
             try
             {
+                con = new(connection.ConnectionString);
+                dt = new();
+                da = new();
                 SqlCommand cmd = new("INSERT INTO Client VALUES(@Name, @SurName, @Patronymic) SET @Id = @@IDENTITY;", con);
                 cmd.CommandType = CommandType.Text;
                 cmd.Parameters.Add("@Id", SqlDbType.Int, 4, "Id").Direction = ParameterDirection.Output;
@@ -191,8 +206,9 @@ namespace Bank_App_SQL_WPF
                 cmd.ExecuteNonQuery();
                 con.Close();
                 Transaction?.Invoke($"Добавлен новый клиент {Name_txt.Text} {SurName_txt.Text} {Patronymic_txt.Text}");
+                Thread.Sleep(2000);
+                da.Update(dt);
                 CleareTextBox();
-
             }
             catch (SqlException ex)
             {
@@ -229,6 +245,7 @@ namespace Bank_App_SQL_WPF
         {
             try
             {
+                con = new(connection.ConnectionString);
                 SqlCommand cmd = new("INSERT INTO Deposit VALUES(@ClientId, @DepositNumber, @AmountFunds, @DepositType);", con);
                 cmd.CommandType = CommandType.Text;
                 cmd.Parameters.AddWithValue("@ClientId", ClientId_txt.Text);
@@ -265,6 +282,9 @@ namespace Bank_App_SQL_WPF
 
         private void Button_Ok_DeleteClient(object sender, RoutedEventArgs e)
         {
+            con = new(connection.ConnectionString);
+            dt = new();
+            da = new();
             con.Open();
             SqlCommand cmd = new("Delete From Client Where Id = " + Id_Delete_txt.Text + " ", con);
             try
@@ -272,8 +292,9 @@ namespace Bank_App_SQL_WPF
                 cmd.ExecuteNonQuery();
                 con.Close();
                 Transaction?.Invoke($"Клиент {Id_Delete_txt.Text} удалён");
+                Thread.Sleep(2000);
+                da.Update(dt);
                 CleareTextBox();
-
             }
             catch (SqlException ex)
             {
@@ -287,6 +308,7 @@ namespace Bank_App_SQL_WPF
 
         private void Button_Ok_CloseDeposit(object sender, RoutedEventArgs e)
         {
+            con = new(connection.ConnectionString);
             con.Open();
             SqlCommand cmd = new("Delete From Deposit Where DepositNumber = " + DepositNumber_Close_txt.Text + " ", con);
             try

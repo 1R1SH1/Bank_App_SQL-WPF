@@ -7,7 +7,7 @@
 
 CREATE TABLE [dbo].[Deposit] (
     [ClientId]       INT           NOT NULL,
-    [DepositNumber]  numeric  (18,0) NULL,
+    [DepositNumber]  numeric  (16,0) NULL,
     [AmountFunds]    INT           NULL,
     [DepositType]    NVARCHAR (50) NULL
 );
